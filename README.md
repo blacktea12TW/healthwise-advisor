@@ -1,10 +1,5 @@
 ### 前置運作流程
-```
-lightrag build
-```
-```
-lightrag query
-```
+lightrag build --> lightrag query
 ```
 npm install
 ```

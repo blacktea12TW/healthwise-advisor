@@ -48,6 +48,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Progress } from "@/components/ui/progress";
+import { askInsuranceLLM } from "@/lib/llm-client";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -251,21 +252,47 @@ function Index() {
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [selected, setSelected] = useState<string[]>([]);
+  const [aiSummary, setAiSummary] = useState("");
+  const [aiReasoning, setAiReasoning] = useState<string[]>([]);
 
-  const handleGenerate = () => {
+  const handleGenerate = async () => {
     setLoading(true);
     setSubmitted(false);
     setSelected([]);
-    setTimeout(() => {
-      setLoading(false);
+    setAiSummary("");
+    setAiReasoning([]);
+
+    try {
+      const prompt = `你是保險推薦顧問。請根據以下使用者資料，輸出一段中文摘要與 3 個重點理由，用於協助展示保單推薦結果。\n\n使用者資料：\n- 性別：${gender === "male" ? "男性" : "女性"}\n- 年齡：${age}\n- 疾病類別：${diseaseLabel}\n\n要求：\n1. 先給出 1 段 80 到 120 字的摘要\n2. 再列出 3 個重點理由，每個理由 20 到 40 字\n3. 輸出格式必須是：\n摘要：...\n理由1：...\n理由2：...\n理由3：...`;
+
+      const reply = await askInsuranceLLM(prompt);
+      const lines = reply
+        .split(/\n+/)
+        .map((line) => line.trim())
+        .filter(Boolean);
+
+      const summaryLine = lines.find((line) => line.startsWith("摘要："))?.replace(/^摘要：/, "").trim() || "已依據你的需求整理出適合的保單推薦方向。";
+      const reasons = lines
+        .filter((line) => /^理由\d+：/.test(line))
+        .map((line) => line.replace(/^理由\d+：/, "").trim())
+        .slice(0, 3);
+
+      setAiSummary(summaryLine);
+      setAiReasoning(reasons.length > 0 ? reasons : ["重視理賠透明度", "兼顧預算與保障範圍", "強調疾病特異性適配"]);
+
       setSubmitted(true);
       toast.success("已為您生成 10 張推薦保單", {
-        description: "可展開卡片並勾選最多 3 張進行比較",
+        description: "AI 已依據你的條件整理推薦理由",
       });
       setTimeout(() => {
         document.getElementById("results")?.scrollIntoView({ behavior: "smooth" });
       }, 100);
-    }, 1400);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "無法生成推薦";
+      toast.error("推薦生成失敗", { description: message });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const toggleSelect = (id: string, checked: boolean) => {
@@ -465,6 +492,22 @@ function Index() {
                   已選擇 <span className="text-primary font-semibold">{selected.length}</span> / 3
                 </div>
               </div>
+
+              {aiSummary && (
+                <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 space-y-3">
+                  <div className="flex items-center gap-2 text-sm font-semibold text-primary">
+                    <Sparkles className="h-4 w-4" /> AI 推薦摘要
+                  </div>
+                  <p className="text-sm leading-7 text-foreground">{aiSummary}</p>
+                  <div className="flex flex-wrap gap-2">
+                    {aiReasoning.map((reason, idx) => (
+                      <Badge key={`${reason}-${idx}`} variant="secondary" className="bg-background">
+                        {reason}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <Accordion type="multiple" className="space-y-3">
                 {MOCK_POLICIES.map((p, idx) => {

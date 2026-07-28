@@ -1,6 +1,16 @@
 ### 前置運作流程
-lightrag build -> lightrag query -> npm install -> npm run dev
-
+```
+lightrag build
+```
+```
+lightrag query
+```
+```
+npm install
+```
+```
+npm run dev
+```
 make sure to add .env.local in your project (under healthwise-advisor) 
 
 .env.local裡面應該要長怎樣:

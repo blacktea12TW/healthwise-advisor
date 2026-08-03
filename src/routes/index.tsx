@@ -380,13 +380,9 @@ function Index() {
               <Shield className="h-5 w-5" />
             </div>
             <div>
-              <div className="font-semibold tracking-tight text-foreground">InsureMatch AI</div>
+              <div className="font-semibold tracking-tight text-foreground">InsuranceMatch AI</div>
               <div className="text-[11px] text-muted-foreground -mt-0.5">智慧保險推薦系統</div>
             </div>
-          </div>
-          <div className="hidden sm:flex items-center gap-2 text-xs text-muted-foreground">
-            <Sparkles className="h-3.5 w-3.5 text-primary" />
-            AI-powered · 透明推薦邏輯
           </div>
         </div>
       </header>
@@ -397,9 +393,6 @@ function Index() {
         <div className="mx-auto max-w-7xl px-4 pt-12 pb-10 md:pt-20 md:pb-16 relative">
           <div className="grid lg:grid-cols-5 gap-8 items-start">
             <div className="lg:col-span-2 space-y-4">
-              <Badge className="bg-teal/15 text-teal border-teal/30 hover:bg-teal/20">
-                Step 1 · 使用者輸入
-              </Badge>
               <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-foreground leading-tight">
                 找到<span className="bg-[image:var(--gradient-hero)] bg-clip-text text-transparent"> 真正適合你 </span>的健康保險
               </h1>
@@ -525,7 +518,6 @@ function Index() {
             <TabsContent value="recommendations" className="space-y-6">
               <div className="flex flex-wrap items-end justify-between gap-3">
                 <div>
-                  <Badge className="bg-teal/15 text-teal border-teal/30 mb-2">Step 2 · 推薦結果</Badge>
                   <h2 className="text-2xl font-bold tracking-tight">10 張精選保單</h2>
                   <p className="text-sm text-muted-foreground mt-1">
                     根據 {gender === "male" ? "男性" : "女性"} · {age} 歲 · {diseaseLabel} 產生
@@ -621,7 +613,6 @@ function Index() {
                 <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
                   <div className="flex items-end justify-between gap-3 mb-4 mt-10 flex-wrap">
                     <div>
-                      <Badge className="bg-teal/15 text-teal border-teal/30 mb-2">Step 3 · 比較矩陣</Badge>
                       <h2 className="text-2xl font-bold tracking-tight">保單比較表</h2>
                       <p className="text-sm text-muted-foreground mt-1">
                         目前比較 {selectedPolicies.length} 張保單 · 滑鼠移入 ⚠️ 查看社群來源
@@ -755,7 +746,6 @@ function Index() {
 
       <footer className="border-t border-border/60 bg-card/50">
         <div className="mx-auto max-w-7xl px-4 py-6 text-xs text-muted-foreground flex flex-wrap gap-2 justify-between">
-          <div>© 2026 InsureMatch AI · Demo 使用模擬資料</div>
           <div className="flex items-center gap-1.5"><Users className="h-3.5 w-3.5" /> 為大學生 & 新鮮人設計</div>
         </div>
       </footer>
@@ -812,9 +802,6 @@ function DualReimbursement({
           <div className="flex items-start justify-between gap-3">
             <div>
               <h3 className="text-lg font-bold tracking-tight">為什麼推薦這個組合？</h3>
-              <p className="text-sm text-muted-foreground mt-1">
-                解決「大學生被盲目推薦癌症險、不知推薦標準」的痛點
-              </p>
             </div>
             <Popover>
               <PopoverTrigger asChild>

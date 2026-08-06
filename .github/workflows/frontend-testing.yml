@@ -4,6 +4,8 @@ on:
   push:
     branches: ['main'] # Trigger on push to main branch
 
+env:
+  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
 # Grant permissions needed for GitHub Pages deployment
 permissions:
   contents: read

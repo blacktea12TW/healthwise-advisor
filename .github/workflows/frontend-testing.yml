@@ -1,37 +1,54 @@
-name: Frontend CI Test
+name: Deploy Vite App
 
 on:
   push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+    branches: ['main'] # Trigger on push to main branch
 
-env:
-  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
+# Grant permissions needed for GitHub Pages deployment
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow one concurrent deployment
+concurrency:
+  group: 'pages'
+  cancel-in-progress: true
 
 jobs:
-  test:
+  build-and-test:
     runs-on: ubuntu-latest
-
     steps:
-      # 1. 取得儲存庫的程式碼
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2. 設定 Bun 環境 (因為專案包含 bun.lock)
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v1
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          bun-version: latest
+          node-version: 20 # Use a modern Node version
+          cache: 'npm'    # Caches npm dependencies for faster runs
 
-      # 3. 安裝專案依賴套件
       - name: Install dependencies
-        run: bun install
+        run: npm ci
 
-      # 4. 執行 Linter (檢查語法與排版)
-      - name: Run ESLint
-        run: bun run lint # 請確認 package.json 中是否有 lint 指令
-
-      # 5. 執行單元測試
       - name: Run Tests
-        run: bun test # 或是 bun run test，取決於您的 package.json 設定
+        run: npm run test --if-present # Runs your test script if defined in package.json
+
+      - name: Build Vite App
+        run: npm run build
+
+      - name: Upload Pages Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './dist' # Vite builds to the /dist directory by default
+
+  deploy:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

@@ -4,10 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Accordion } from "@/components/ui/accordion";
 
-import { useInsuranceFilters } from "@/hooks/useInsuranceFilters";
-import { usePolicyComparison } from "@/hooks/usePolicyComparison";
-import { useMatchingScore } from "@/hooks/useMatchingScore";
-import { MOCK_POLICIES } from "@/lib/constants";
+import { useInsuranceStore } from "@/store/useInsuranceStore";
+import { MOCK_POLICIES, DISEASES } from "@/lib/constants";
 
 import { InsuranceForm } from "@/components/InsuranceForm";
 import { PolicyCard } from "@/components/PolicyCard";
@@ -19,15 +17,19 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
-  const {
-    gender, setGender, age, setAge, disease, setDisease, diseaseLabel,
-    loading, submitted, aiSummary, aiReasoning, displayPolicies, handleGenerate
-  } = useInsuranceFilters();
-
-  const { selected, toggleSelect, clearSelection, selectedPolicies } = usePolicyComparison(displayPolicies);
-  const matchScore = useMatchingScore(age, gender, disease);
-
+  // 只拿出在佈局層次需要知道的狀態
+  const submitted = useInsuranceStore(state => state.submitted);
+  const displayPolicies = useInsuranceStore(state => state.displayPolicies);
+  const aiSummary = useInsuranceStore(state => state.aiSummary);
+  const aiReasoning = useInsuranceStore(state => state.aiReasoning);
+  const selectedPolicyIds = useInsuranceStore(state => state.selectedPolicyIds);
+  
+  const gender = useInsuranceStore(state => state.gender);
+  const age = useInsuranceStore(state => state.age);
+  const disease = useInsuranceStore(state => state.disease);
+  
   const activePolicies = displayPolicies.length > 0 ? displayPolicies : MOCK_POLICIES;
+  const diseaseLabel = DISEASES.find(d => d.value === disease)?.label ?? "";
 
   return (
     <div className="min-h-screen bg-background">
@@ -45,12 +47,8 @@ function Index() {
         </div>
       </header>
 
-      <InsuranceForm 
-        gender={gender} setGender={setGender} 
-        age={age} setAge={setAge} 
-        disease={disease} setDisease={setDisease} 
-        loading={loading} onGenerate={() => handleGenerate(clearSelection)} 
-      />
+      {/* 不再需要傳入任何 props！ */}
+      <InsuranceForm />
 
       {submitted && (
         <section id="results" className="mx-auto max-w-7xl px-4 pb-16 animate-in fade-in duration-500">
@@ -67,7 +65,7 @@ function Index() {
                   <p className="text-sm text-muted-foreground mt-1">根據 {gender === "male" ? "男性" : "女性"} · {age} 歲 · {diseaseLabel} 產生</p>
                 </div>
                 <div className="text-sm text-muted-foreground">
-                  已選擇 <span className="text-primary font-semibold">{selected.length}</span> / 3
+                  已選擇 <span className="text-primary font-semibold">{selectedPolicyIds.length}</span> / 3
                 </div>
               </div>
 
@@ -87,21 +85,17 @@ function Index() {
 
               <Accordion type="multiple" className="space-y-3">
                 {activePolicies.map((p, idx) => (
-                  <PolicyCard 
-                    key={p.id} 
-                    policy={p} 
-                    index={idx} 
-                    isSelected={selected.includes(p.id)} 
-                    onToggleSelect={toggleSelect} 
-                  />
+                  <PolicyCard key={p.id} policy={p} index={idx} />
                 ))}
               </Accordion>
 
-              <PolicyComparison selectedPolicies={selectedPolicies} />
+              {/* 不再需要傳入 props！ */}
+              <PolicyComparison />
             </TabsContent>
 
             <TabsContent value="dual">
-              <DualReimbursement score={matchScore} gender={gender} age={age} diseaseLabel={diseaseLabel} />
+              {/* 不再需要傳入 props！ */}
+              <DualReimbursement />
             </TabsContent>
           </Tabs>
         </section>

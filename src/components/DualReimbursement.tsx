@@ -3,16 +3,15 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Progress } from "@/components/ui/progress";
 import { TrendingUp, Activity, Shield, Users, Info, Sparkles, CheckCircle2 } from "lucide-react";
-import { Gender } from "@/types";
+import { useInsuranceStore } from "@/store/useInsuranceStore";
+import { useMatchingScore } from "@/hooks/useMatchingScore";
+import { DISEASES } from "@/lib/constants";
 
-interface Props {
-  score: number;
-  gender: Gender;
-  age: string;
-  diseaseLabel: string;
-}
+export function DualReimbursement() {
+  const { gender, age, disease } = useInsuranceStore();
+  const score = useMatchingScore();
+  const diseaseLabel = DISEASES.find(d => d.value === disease)?.label ?? "";
 
-export function DualReimbursement({ score, gender, age, diseaseLabel }: Props) {
   const factors = [
     { label: "年齡風險加權", value: Math.min(95, 40 + parseInt(age || "0", 10)), icon: TrendingUp },
     { label: "疾病類別匹配", value: 88, icon: Activity },

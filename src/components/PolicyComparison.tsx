@@ -3,10 +3,16 @@ import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { AlertTriangle } from "lucide-react";
-import { Policy } from "@/types";
-import { PAYOUT_META } from "@/lib/constants";
+import { PAYOUT_META, MOCK_POLICIES } from "@/lib/constants";
+import { useInsuranceStore } from "@/store/useInsuranceStore";
 
-export function PolicyComparison({ selectedPolicies }: { selectedPolicies: Policy[] }) {
+export function PolicyComparison() {
+  const selectedPolicyIds = useInsuranceStore(state => state.selectedPolicyIds);
+  const displayPolicies = useInsuranceStore(state => state.displayPolicies);
+  
+  const activePolicies = displayPolicies.length > 0 ? displayPolicies : MOCK_POLICIES;
+  const selectedPolicies = activePolicies.filter(p => selectedPolicyIds.includes(p.id));
+
   if (selectedPolicies.length === 0) return null;
 
   return (

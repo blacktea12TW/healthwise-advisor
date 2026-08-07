@@ -1,7 +1,11 @@
 import { useMemo } from "react";
-import { Gender, DiseaseKey } from "@/types";
+import { useInsuranceStore } from "@/store/useInsuranceStore";
 
-export function useMatchingScore(age: string, gender: Gender, disease: DiseaseKey) {
+export function useMatchingScore() {
+  const age = useInsuranceStore((state) => state.age);
+  const gender = useInsuranceStore((state) => state.gender);
+  const disease = useInsuranceStore((state) => state.disease);
+
   return useMemo(() => {
     const a = parseInt(age || "0", 10);
     let base = 68;

@@ -4,21 +4,18 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Loader2, Sparkles, CheckCircle2 } from "lucide-react";
-import { Gender, DiseaseKey } from "@/types";
 import { DISEASES } from "@/lib/constants";
+import { useInsuranceStore } from "@/store/useInsuranceStore";
+import { Gender, DiseaseKey } from "@/types";
 
-interface Props {
-  gender: Gender;
-  setGender: (v: Gender) => void;
-  age: string;
-  setAge: (v: string) => void;
-  disease: DiseaseKey;
-  setDisease: (v: DiseaseKey) => void;
-  loading: boolean;
-  onGenerate: () => void;
-}
+export function InsuranceForm() {
+  const { 
+    gender, setGender, 
+    age, setAge, 
+    disease, setDisease, 
+    loading, generateRecommendations 
+  } = useInsuranceStore();
 
-export function InsuranceForm({ gender, setGender, age, setAge, disease, setDisease, loading, onGenerate }: Props) {
   return (
     <section className="relative overflow-hidden">
       <div className="absolute inset-0 bg-[image:var(--gradient-hero)] opacity-[0.08]" aria-hidden />
@@ -29,8 +26,7 @@ export function InsuranceForm({ gender, setGender, age, setAge, disease, setDise
               找到<span className="bg-[image:var(--gradient-hero)] bg-clip-text text-transparent"> 真正適合你 </span>的健康保險
             </h1>
             <p className="text-muted-foreground text-base leading-relaxed">
-              告訴我們你的基本資料與想關注的疾病類別，AI 將依照理賠透明度、賠付比例與市場口碑，
-              在數秒內產出 10 張精選保單建議，並支援動態比較。
+              告訴我們你的基本資料與想關注的疾病類別，AI 將依照理賠透明度、賠付比例與市場口碑，在數秒內產出 10 張精選保單建議。
             </p>
             <div className="flex flex-wrap gap-4 pt-2 text-sm text-muted-foreground">
               <div className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-success" />透明理賠標準</div>
@@ -45,10 +41,7 @@ export function InsuranceForm({ gender, setGender, age, setAge, disease, setDise
                 <div className="space-y-2">
                   <Label className="text-sm font-medium">性別 Gender</Label>
                   <RadioGroup value={gender} onValueChange={(v) => setGender(v as Gender)} className="grid grid-cols-2 gap-2">
-                    {[
-                      { v: "male", label: "男 Male" },
-                      { v: "female", label: "女 Female" },
-                    ].map((o) => (
+                    {[{ v: "male", label: "男 Male" }, { v: "female", label: "女 Female" }].map((o) => (
                       <Label
                         key={o.v}
                         htmlFor={`g-${o.v}`}
@@ -86,7 +79,7 @@ export function InsuranceForm({ gender, setGender, age, setAge, disease, setDise
                 </div>
               </div>
 
-              <Button onClick={onGenerate} disabled={loading} size="lg" className="mt-6 w-full h-12 text-base bg-[image:var(--gradient-hero)] hover:opacity-95 transition-opacity shadow-[var(--shadow-soft)]">
+              <Button onClick={generateRecommendations} disabled={loading} size="lg" className="mt-6 w-full h-12 text-base bg-[image:var(--gradient-hero)] hover:opacity-95 transition-opacity shadow-[var(--shadow-soft)]">
                 {loading ? (
                   <><Loader2 className="h-5 w-5 animate-spin" /> AI 分析中… Generating</>
                 ) : (

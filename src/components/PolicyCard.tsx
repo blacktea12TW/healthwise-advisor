@@ -3,16 +3,20 @@ import { Badge } from "@/components/ui/badge";
 import { AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { Policy } from "@/types";
 import { PAYOUT_META } from "@/lib/constants";
+import { useInsuranceStore } from "@/store/useInsuranceStore";
 
 interface Props {
   policy: Policy;
   index: number;
-  isSelected: boolean;
-  onToggleSelect: (id: string, checked: boolean) => void;
 }
 
-export function PolicyCard({ policy, index, isSelected, onToggleSelect }: Props) {
+export function PolicyCard({ policy, index }: Props) {
   const meta = PAYOUT_META[policy.payoutStandard];
+  
+  // 從 Store 獲取選取狀態與操作
+  const selectedPolicyIds = useInsuranceStore(state => state.selectedPolicyIds);
+  const togglePolicySelection = useInsuranceStore(state => state.togglePolicySelection);
+  const isSelected = selectedPolicyIds.includes(policy.id);
 
   return (
     <AccordionItem
@@ -24,7 +28,7 @@ export function PolicyCard({ policy, index, isSelected, onToggleSelect }: Props)
       <div className="flex items-center gap-3 py-1">
         <Checkbox
           checked={isSelected}
-          onCheckedChange={(c) => onToggleSelect(policy.id, Boolean(c))}
+          onCheckedChange={(c) => togglePolicySelection(policy.id, Boolean(c))}
           onClick={(e) => e.stopPropagation()}
           className="h-5 w-5"
           aria-label={`select ${policy.policyName}`}

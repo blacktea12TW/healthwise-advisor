@@ -80,7 +80,6 @@ function Index() {
           <div className="absolute inset-0 bg-[image:var(--gradient-hero)] opacity-[0.08]" aria-hidden />
           <div className="relative mx-auto max-w-5xl px-4 py-10 md:py-16">
             <div className="mb-8 text-center">
-              <Badge className="mb-3 bg-primary/10 text-primary">Step 1 · 個人化問卷</Badge>
               <h1 className="text-3xl font-bold tracking-tight md:text-5xl">
                 找到<span className="bg-[image:var(--gradient-hero)] bg-clip-text text-transparent">真正適合你</span>的健康保險
               </h1>

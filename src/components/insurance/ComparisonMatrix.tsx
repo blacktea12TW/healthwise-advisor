@@ -208,7 +208,6 @@ export function ComparisonMatrix({
     <div id="comparison" className="animate-in fade-in slide-in-from-bottom-2 duration-500 mt-10">
       <div className="flex flex-wrap items-end justify-between gap-4 mb-4">
         <div>
-          <Badge className="bg-teal/15 text-teal border-teal/30 mb-2">Step 3 · 詳細比較矩陣</Badge>
           <h2 className="text-2xl font-bold tracking-tight">保單比較表</h2>
           <p className="text-sm text-muted-foreground mt-1">
             目前比較 {policies.length} 張保單 · 共 7 大類、

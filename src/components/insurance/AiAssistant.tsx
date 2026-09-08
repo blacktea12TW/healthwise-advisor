@@ -36,6 +36,12 @@ const DEPTH_LABEL: Record<AssistantContext["conversationPreference"]["depth"], s
   pro: "專業版",
 };
 
+const DEPTH_INSTRUCTIONS: Record<AssistantContext["conversationPreference"]["depth"], string> = {
+  simple: `回答時請使用真正的白話中文：先講結論，再補充原因。把「保險術語」改成一般人日常會說的話；若一定要使用術語，第一次出現時立刻用括號解釋。每段最多 2 到 3 句，優先使用短句與條列。盡量用具體情境或數字說明，不要只複述比較表欄位。避免「承保、給付條件、除外責任、保障缺口」等沒有解釋的專業詞。`,
+  normal: `請使用清楚、自然的繁體中文回答：先給結論，再說明理由。可以使用常見保險術語，但第一次出現時要簡短解釋，並以條列整理重點。`,
+  pro: `請使用較完整且精確的保險分析語氣：清楚區分商品差異、理賠條件、除外責任、等待期與續保規則。可以使用專業術語，但仍要以比較表中的資料為依據，不得自行推測。`,
+};
+
 export function AiAssistant({
   answers,
   selectedPolicies,
@@ -111,6 +117,7 @@ export function AiAssistant({
     try {
       const context = [
         "你是 HealthWise 的保險比較助手。請只根據提供的問卷、保單與比較差異回答，不要捏造保險條款；若資料不足，請明確說明需要確認正式條款。回答使用繁體中文，清楚、具體、避免保證式的投保建議。",
+        `目前回答深度為「${DEPTH_LABEL[preference.depth]}」。請嚴格遵守以下寫作規則：${DEPTH_INSTRUCTIONS[preference.depth]}`,
         `問卷資料：${JSON.stringify(answers)}`,
         `目前比較保單：${JSON.stringify(selectedPolicies)}`,
         `比較差異：${JSON.stringify(differences)}`,

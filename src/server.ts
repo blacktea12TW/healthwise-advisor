@@ -74,7 +74,13 @@ export default {
         const backendBaseUrl = getBackendBaseUrl();
         const upstreamUrl = new URL(`${backendBaseUrl}/v1/chat/completions${url.search}`);
 
-        const headers = new Headers(request.headers);
+        const ALLOWED_FORWARD_HEADERS = ["content-type", "accept"];
+
+        const headers = new Headers();
+        for (const name of ALLOWED_FORWARD_HEADERS) {
+          const value = request.headers.get(name);
+          if (value) headers.set(name, value);
+        }
         headers.set("host", upstreamUrl.host);
         if (LLM_BACKEND_API_KEY) {
           headers.set("Authorization", `Bearer ${LLM_BACKEND_API_KEY}`);

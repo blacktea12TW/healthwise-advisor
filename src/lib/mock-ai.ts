@@ -68,8 +68,13 @@ export function computeDifferences(policies: Policy[]): ComparisonDifference[] {
 export function parsePreference(input: string, current: AssistantContext["conversationPreference"]) {
   const raw = input.trim();
   let depth = current.depth;
-  if (/簡單|白話|太難|聽不懂|淺/.test(raw)) depth = "simple";
-  if (/深入|專業|太簡單|條款細節|進階/.test(raw)) depth = "pro";
+  if (/標準|一般|普通|適中|正常|回到標準|恢復標準/.test(raw)) {
+    depth = "normal";
+  } else if (/簡單|白話|太難|聽不懂|淺/.test(raw)) {
+    depth = "simple";
+  } else if (/深入|專業|太簡單|條款細節|進階/.test(raw)) {
+    depth = "pro";
+  }
   const focus: string[] = [];
   if (/理賠|給付/.test(raw)) focus.push("理賠");
   if (/條款/.test(raw)) focus.push("條款");

@@ -110,7 +110,6 @@ export function PlanResults({
   return (
     <div className="space-y-5">
       <div>
-        <Badge className="bg-teal/15 text-teal border-teal/30 mb-2">Step 2 · 個人化方案</Badge>
         <h2 className="text-2xl font-bold tracking-tight">根據您的回答產出 3 個方案</h2>
         <p className="text-sm text-muted-foreground mt-1 flex items-center gap-1.5">
           <Wallet className="h-4 w-4" />

@@ -1,11 +1,10 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import {
   ArrowDownRight,
   ChevronDown,
   HelpCircle,
   MessageCircle,
   Send,
-  Sliders,
   X,
 } from "lucide-react";
 
@@ -24,7 +23,6 @@ import {
   generateSuggestedQuestions,
   makeSystemMessage,
   makeUserMessage,
-  regenerateQuestions,
 } from "@/lib/mock-ai";
 import { cn } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
@@ -34,6 +32,12 @@ const DEPTH_LABEL: Record<AssistantContext["conversationPreference"]["depth"], s
   simple: "白話版",
   normal: "標準",
   pro: "專業版",
+};
+
+const DEPTH_INSTRUCTIONS: Record<AssistantContext["conversationPreference"]["depth"], string> = {
+  simple: `回答時請使用真正的白話中文：先講結論，再補充原因。把「保險術語」改成一般人日常會說的話；若一定要使用術語，第一次出現時立刻用括號解釋。每段最多 2 到 3 句，優先使用短句與條列。盡量用具體情境或數字說明，不要只複述比較表欄位。避免「承保、給付條件、除外責任、保障缺口」等沒有解釋的專業詞。`,
+  normal: `請使用清楚、自然的繁體中文回答：先給結論，再說明理由。可以使用常見保險術語，但第一次出現時要簡短解釋，並以條列整理重點。`,
+  pro: `請使用較完整且精確的保險分析語氣：清楚區分商品差異、理賠條件、除外責任、等待期與續保規則。可以使用專業術語，但仍要以比較表中的資料為依據，不得自行推測。`,
 };
 
 export function AiAssistant({
@@ -53,7 +57,11 @@ export function AiAssistant({
   const [messages, setMessages] = useState<AssistantMessage[]>([]);
   const [questions, setQuestions] = useState<SuggestedQuestion[]>([]);
   const [input, setInput] = useState("");
-  const [styleInput, setStyleInput] = useState("");
+  const [depthMenuOpen, setDepthMenuOpen] = useState(false);
+  const [panelWidth, setPanelWidth] = useState(420);
+  const [panelHeight, setPanelHeight] = useState(680);
+  const resizeStart = useRef<{ x: number; width: number } | null>(null);
+  const heightResizeStart = useRef<{ y: number; height: number } | null>(null);
   const [thinking, setThinking] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -100,6 +108,52 @@ export function AiAssistant({
     if (open) inputRef.current?.focus();
   }, [open, thinking]);
 
+  useEffect(() => {
+    const handlePointerMove = (event: PointerEvent) => {
+      if (resizeStart.current) {
+        const nextWidth = resizeStart.current.width - (event.clientX - resizeStart.current.x);
+        const maxWidth = Math.min(window.innerWidth * 0.9, 720);
+        setPanelWidth(Math.min(Math.max(nextWidth, 320), maxWidth));
+      }
+      if (heightResizeStart.current) {
+        const nextHeight = heightResizeStart.current.height - (event.clientY - heightResizeStart.current.y);
+        const maxHeight = Math.min(window.innerHeight * 0.9, 680);
+        setPanelHeight(Math.min(Math.max(nextHeight, 420), maxHeight));
+      }
+    };
+
+    const stopResize = () => {
+      resizeStart.current = null;
+      heightResizeStart.current = null;
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+    };
+
+    window.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener("pointerup", stopResize);
+    return () => {
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", stopResize);
+    };
+  }, []);
+
+  const startResize = (event: ReactPointerEvent<HTMLDivElement>) => {
+    resizeStart.current = { x: event.clientX, width: panelWidth };
+    document.body.style.cursor = "ew-resize";
+    document.body.style.userSelect = "none";
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+
+  const startHeightResize = (event: ReactPointerEvent<HTMLDivElement>) => {
+    heightResizeStart.current = {
+      y: event.clientY,
+      height: event.currentTarget.parentElement?.getBoundingClientRect().height ?? panelHeight,
+    };
+    document.body.style.cursor = "ns-resize";
+    document.body.style.userSelect = "none";
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+
   const ask = async (text: string) => {
     if (!text.trim() || thinking) return;
     const question = text.trim();
@@ -111,6 +165,7 @@ export function AiAssistant({
     try {
       const context = [
         "你是 HealthWise 的保險比較助手。請只根據提供的問卷、保單與比較差異回答，不要捏造保險條款；若資料不足，請明確說明需要確認正式條款。回答使用繁體中文，清楚、具體、避免保證式的投保建議。",
+        `目前回答深度為「${DEPTH_LABEL[preference.depth]}」。請嚴格遵守以下寫作規則：${DEPTH_INSTRUCTIONS[preference.depth]}`,
         `問卷資料：${JSON.stringify(answers)}`,
         `目前比較保單：${JSON.stringify(selectedPolicies)}`,
         `比較差異：${JSON.stringify(differences)}`,
@@ -131,23 +186,13 @@ export function AiAssistant({
     }
   };
 
-  const applyStyle = () => {
-    if (!styleInput.trim()) return;
-    const { questions: qs, preference: pref } = regenerateQuestions(styleInput.trim(), ctx);
-    setPreference(pref);
-    setQuestions(qs);
-    setMessages((m) => [
-      ...m,
-      makeUserMessage(styleInput.trim()),
-      {
-        id: Math.random().toString(36).slice(2),
-        role: "system",
-        content: `已記住您的偏好：說明深度「${DEPTH_LABEL[pref.depth]}」${
-          pref.focus.length ? `、重點關注「${pref.focus.join("、")}」` : ""
-        }。以下建議問題已依此重新產生。`,
-      },
+  const changeDepth = (depth: AssistantContext["conversationPreference"]["depth"]) => {
+    setPreference((current) => ({ ...current, depth }));
+    setDepthMenuOpen(false);
+    setMessages((current) => [
+      ...current,
+      makeSystemMessage(`已切換回答深度為「${DEPTH_LABEL[depth]}」，接下來的回答會套用此設定。`),
     ]);
-    setStyleInput("");
   };
 
   if (!open) {
@@ -163,7 +208,27 @@ export function AiAssistant({
   }
 
   return (
-    <div className="fixed bottom-5 right-5 z-50 w-[calc(100vw-2.5rem)] sm:w-[420px] rounded-2xl border border-border bg-card shadow-[var(--shadow-elegant)] overflow-hidden flex flex-col max-h-[min(680px,calc(100vh-3rem))]">
+    <div
+      className="fixed bottom-5 right-5 z-50 flex max-h-[90vh] min-h-[420px] min-w-[320px] max-w-[min(90vw,720px)] resize-y flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-[var(--shadow-elegant)]"
+      style={{
+        width: `min(${panelWidth}px, calc(100vw - 2.5rem))`,
+        height: `min(${panelHeight}px, calc(100vh - 3rem))`,
+      }}
+    >
+      <div
+        role="separator"
+        aria-label="調整 AI 比較助手高度"
+        aria-orientation="horizontal"
+        onPointerDown={startHeightResize}
+        className="absolute inset-x-0 top-0 z-10 h-2 cursor-ns-resize touch-none"
+      />
+      <div
+        role="separator"
+        aria-label="調整 AI 比較助手寬度"
+        aria-orientation="vertical"
+        onPointerDown={startResize}
+        className="absolute inset-y-0 left-0 z-10 w-2 cursor-ew-resize touch-none"
+      />
       <div className="flex items-center gap-2 px-4 py-3 bg-[image:var(--gradient-hero)] text-primary-foreground">
         <MessageCircle className="h-5 w-5 shrink-0" />
         <div className="min-w-0">
@@ -276,7 +341,7 @@ export function AiAssistant({
         )}
 
         {questions.length > 0 && !thinking && (
-          <div className="space-y-2">
+          <div className="space-y-2 pt-6">
             <div className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
               <HelpCircle className="h-3.5 w-3.5" />
               建議你問（依問卷 + 商品差異產生）
@@ -332,25 +397,43 @@ export function AiAssistant({
       </div>
 
       <div className="border-t border-border p-3 space-y-2 bg-card">
-        <div className="flex items-center gap-2">
-          <Sliders className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-          <Input
-            value={styleInput}
-            onChange={(e) => setStyleInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") applyStyle();
-            }}
-            placeholder="調整建議問題風格，例如「講簡單一點」「多問理賠條款」"
-            className="h-9 text-xs"
-          />
-          <Button variant="outline" size="sm" className="h-9 shrink-0" onClick={applyStyle}>
-            套用
-          </Button>
-        </div>
         <div className="flex flex-wrap gap-1.5">
-          <Badge variant="outline" className="text-[11px]">
-            深度：{DEPTH_LABEL[preference.depth]}
-          </Badge>
+          <Popover open={depthMenuOpen} onOpenChange={setDepthMenuOpen}>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                aria-expanded={depthMenuOpen}
+                className="inline-flex items-center gap-1.5 rounded-full border border-border px-2.5 py-1 text-[11px] font-medium hover:bg-muted transition-colors cursor-pointer"
+              >
+                深度：{DEPTH_LABEL[preference.depth]}
+                <ChevronDown className="h-3 w-3" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent side="top" align="start" className="w-48 p-2">
+              <div className="space-y-1.5">
+                {(["simple", "normal", "pro"] as const).map((depth) => (
+                  <button
+                    type="button"
+                    key={depth}
+                    onClick={() => changeDepth(depth)}
+                    className={cn(
+                      "w-full rounded-lg px-3 py-2 text-left text-sm transition-colors",
+                      preference.depth === depth
+                        ? "bg-primary text-primary-foreground font-semibold"
+                        : "hover:bg-muted"
+                    )}
+                  >
+                    <div className="font-medium">{DEPTH_LABEL[depth]}</div>
+                    <div className="text-xs opacity-75">
+                      {depth === "simple" && "白話版，簡單說明"}
+                      {depth === "normal" && "標準版，均衡清楚度"}
+                      {depth === "pro" && "專業版，深入分析"}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </PopoverContent>
+          </Popover>
           {preference.focus.map((f) => (
             <Badge
               key={f}

@@ -1,5 +1,7 @@
 ### 前置運作流程
-lightrag build --> lightrag query
+qdrant testbed --> lightrag query
+qdrant testbed跑一次就好
+之後每次開啟前端系統都直接run lightrag query即可。
 ```
 npm install
 ```

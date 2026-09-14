@@ -1,6 +1,7 @@
 import { askInsuranceLLM } from "@/lib/llm-client";
 import type { Answers, Plan, Policy } from "@/data/insurance";
 import { DISEASES, planMonthly } from "@/data/insurance";
+import { jsonrepair } from "jsonrepair";
 
 interface LlmRecommendation {
   summary?: unknown;
@@ -21,20 +22,26 @@ function extractJson(text: string): LlmRecommendation {
     .replace(/^```(?:json)?\s*/i, "")
     .replace(/\s*```$/i, "");
 
-  try {
-    return JSON.parse(cleaned) as LlmRecommendation;
-  } catch {
-    const start = cleaned.indexOf("{");
-    const end = cleaned.lastIndexOf("}");
+  const candidates = [cleaned];
+  const start = cleaned.indexOf("{");
+  const end = cleaned.lastIndexOf("}");
 
-    if (start < 0 || end <= start) {
-      throw new Error("LLM 回應不是有效的 JSON");
-    }
-
-    return JSON.parse(
-      cleaned.slice(start, end + 1),
-    ) as LlmRecommendation;
+  if (start >= 0 && end > start && (start > 0 || end < cleaned.length - 1)) {
+    candidates.push(cleaned.slice(start, end + 1));
   }
+
+  for (const candidate of candidates) {
+    try {
+      return JSON.parse(candidate) as LlmRecommendation;
+    } catch {
+      try {
+        return JSON.parse(jsonrepair(candidate)) as LlmRecommendation;
+      } catch {
+      }
+    }
+  }
+
+  throw new Error("LLM 回應格式錯誤，請再試一次");
 }
 
 function isText(value: unknown): value is string {
@@ -741,7 +748,7 @@ full
 15. 不得假設前端會替你補值或修改資料。`;
 
   const rawResponse =
-    await askInsuranceLLM(prompt);
+    await askInsuranceLLM(prompt, [], { jsonMode: true });
 
   const response =
     extractJson(rawResponse);

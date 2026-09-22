@@ -377,16 +377,16 @@ export function AiAssistant({
             {suggestionStatus === "generating" && (
               <div className="flex items-center gap-2 rounded-lg border border-dashed border-border px-3 py-2 text-xs text-muted-foreground">
                 <LoaderCircle className="h-3.5 w-3.5 shrink-0 animate-spin" aria-hidden="true" />
-                目前先顯示暫用問題，LLM 正在生成更個人化的推薦問題…
+                目前先顯示暫用問題，AI正在生成更個人化的推薦問題…
               </div>
             )}
             {suggestionStatus === "fallback" && (
               <div className="rounded-lg border border-dashed border-border px-3 py-2 text-xs text-muted-foreground">
-                LLM 暫時無法生成推薦問題，目前顯示的是系統暫用問題。
+                AI目前暫時無法生成推薦問題，目前顯示的是系統暫用問題。
               </div>
             )}
             {suggestionStatus === "llm" && (
-              <div className="text-[11px] text-muted-foreground">以上推薦問題由 LLM 根據目前問卷與比較差異生成</div>
+              <div className="text-[11px] text-muted-foreground">以上推薦問題由AI根據目前問卷與比較差異生成</div>
             )}
             {questions.map((q) => (
               <div

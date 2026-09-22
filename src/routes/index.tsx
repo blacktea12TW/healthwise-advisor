@@ -122,7 +122,7 @@ function Index() {
                       onClick={() => togglePolicySelection(policy.id, !selected)}
                       disabled={!selected && selectedPolicyIds.length >= 8}
                     >
-                      {selected ? "移除" : "加入"} {policy.company} · {policy.code}
+                      {selected ? "移除" : "加入"} {policy.company} · {policy.policyName}
                     </Button>
                   );
                 })}

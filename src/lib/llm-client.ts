@@ -6,7 +6,7 @@ export interface ChatMessage {
 export async function askInsuranceLLM(
   question: string,
   history: ChatMessage[] = [],
-  options: { jsonMode?: boolean; mode?: "hybrid" | "fast" } = {},
+  options: { jsonMode?: boolean; mode?: "hybrid" | "fast"; maxTokens?: number } = {},
 ) {
   const response = await fetch("/api/v1/chat/completions", {
     method: "POST",
@@ -18,7 +18,9 @@ export async function askInsuranceLLM(
       messages: [...history, { role: "user", content: question }],
       stream: false,
       mode: options.mode ?? "hybrid",
-      ...(options.jsonMode ? { max_tokens: 16000 } : {}),
+      ...(options.jsonMode
+        ? { max_tokens: options.maxTokens ?? 16000 }
+        : {}),
       ...(options.jsonMode
         ? { response_format: { type: "json_object" } }
         : {}),

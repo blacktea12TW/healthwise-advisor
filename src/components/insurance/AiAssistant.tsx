@@ -183,7 +183,7 @@ export function AiAssistant({
     setThinking(true);
     try {
       const context = [
-        "你是 HealthWise 的保險比較助手。請只根據提供的問卷、保單與比較差異回答，不要捏造保險條款；若資料不足，請明確說明需要確認正式條款。回答使用繁體中文，清楚、具體、避免保證式的投保建議。",
+        "你是 HealthWise 的保險比較助手。請只根據提供的問卷、保單與比較差異回答，不要捏造保險條款；若資料不足，請明確說明需要確認正式條款。不要要求使用者補充、上傳或提供任何資料，改為建議使用者應向保險公司或業務確認的項目。回答使用繁體中文，清楚、具體、避免保證式的投保建議。",
         `目前回答深度為「${DEPTH_LABEL[preference.depth]}」。請嚴格遵守以下寫作規則：${DEPTH_INSTRUCTIONS[preference.depth]}`,
         `問卷資料：${JSON.stringify(answers)}`,
         `目前比較保單：${JSON.stringify(selectedPolicies)}`,
@@ -368,18 +368,19 @@ export function AiAssistant({
           <div className="text-sm text-muted-foreground animate-pulse">正在分析比較表差異…</div>
         )}
 
-        {questions.length > 0 && !thinking && (
+        {suggestionStatus === "generating" && !thinking && (
+          <div className="flex items-center gap-2 pt-6 text-xs text-muted-foreground">
+            <LoaderCircle className="h-3.5 w-3.5 shrink-0 animate-spin" aria-hidden="true" />
+            AI 正在生成個人化的推薦問題…
+          </div>
+        )}
+
+        {questions.length > 0 && !thinking && suggestionStatus !== "generating" && (
           <div className="space-y-2 pt-6">
             <div className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
               <HelpCircle className="h-3.5 w-3.5" />
               建議你問（依商品差異產生）
             </div>
-            {suggestionStatus === "generating" && (
-              <div className="flex items-center gap-2 rounded-lg border border-dashed border-border px-3 py-2 text-xs text-muted-foreground">
-                <LoaderCircle className="h-3.5 w-3.5 shrink-0 animate-spin" aria-hidden="true" />
-                目前先顯示暫用問題，AI正在生成更個人化的推薦問題…
-              </div>
-            )}
             {suggestionStatus === "fallback" && (
               <div className="rounded-lg border border-dashed border-border px-3 py-2 text-xs text-muted-foreground">
                 AI目前暫時無法生成推薦問題，目前顯示的是系統暫用問題。

@@ -1,10 +1,8 @@
 import { useEffect, useState } from "react";
 import {
-  AlertTriangle,
   ChevronDown,
   Copy,
   Download,
-  ExternalLink,
   Highlighter,
   ListChecks,
   X,
@@ -15,7 +13,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   type CompareRow,
   type Policy,
@@ -90,30 +87,6 @@ function Cell({ row, policy }: { row: CompareRow; policy: Policy }) {
       </ul>
     );
   }
-
-if (row.kind === "links") {
-  const url = String(v);
-
-  if (url === "X") {
-    return (
-      <span className="text-muted-foreground">
-        X
-      </span>
-    );
-  }
-
-  return (
-    <a
-      href={url}
-      target="_blank"
-      rel="noreferrer"
-      className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
-    >
-      查看文件{" "}
-      <ExternalLink className="h-3.5 w-3.5" />
-    </a>
-  );
-}
 
   return <span className="text-sm leading-relaxed">{String(v)}</span>;
 }
@@ -210,7 +183,7 @@ export function ComparisonMatrix({
         <div>
           <h2 className="text-2xl font-bold tracking-tight">保單比較表</h2>
           <p className="text-sm text-muted-foreground mt-1">
-            目前比較 {policies.length} 張保單 · 共 7 大類、
+            目前比較 {policies.length} 張保單 · 共 6 大類、
             {COMPARE_GROUPS.reduce((s, g) => s + g.rows.length, 0)} 項比較維度
           </p>
         </div>
@@ -256,30 +229,6 @@ export function ComparisonMatrix({
                       <div className="min-w-0">
                         <div className="flex items-center gap-1.5 font-semibold text-foreground">
                           <span className="truncate">{p.company}</span>
-                          {p.flagged && (
-                            <Popover>
-                              <PopoverTrigger asChild>
-                                <button
-                                  aria-label="社群風評來源"
-                                  className="cursor-pointer shrink-0"
-                                >
-                                  <span className="text-warning">⚠️</span>
-                                </button>
-                              </PopoverTrigger>
-                              <PopoverContent className="w-72" side="top">
-                                <div className="space-y-2">
-                                  <div className="flex items-center gap-2 text-warning font-semibold text-sm">
-                                    <AlertTriangle className="h-4 w-4" /> 社群風評提示
-                                  </div>
-                                  <div className="text-xs text-muted-foreground">來源 Source</div>
-                                  <div className="text-sm font-medium">{p.flagged.source}</div>
-                                  <p className="text-xs text-muted-foreground leading-relaxed pt-1 border-t border-border">
-                                    {p.flagged.note}
-                                  </p>
-                                </div>
-                              </PopoverContent>
-                            </Popover>
-                          )}
                         </div>
                         <div className="text-xs font-normal text-muted-foreground mt-0.5 truncate">
                           {p.policyName}

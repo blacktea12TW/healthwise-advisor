@@ -27,9 +27,7 @@ export interface Policy {
   payoutAmount: string;
   payoutRatio: string;
   payoutStandard: "guaranteed" | "conditional" | "consult";
-  flagged?: { source: string; note: string };
   /* ---- extended (optional) detail fields for the comparison matrix ---- */
-  approvalNumber?: string;
   status?: string;
   premiumRange?: string;
   paymentPeriod?: string;
@@ -62,11 +60,6 @@ export interface Policy {
   cons?: string[];
   suitableFor?: string;
   notSuitableFor?: string;
-  policyDocumentUrl?: string;
-  productDocumentUrl?: string;
-  officialProductUrl?: string;
-  dataSource?: string;
-  lastUpdated?: string;
 }
 
 export const MAX_COMPARE = 8;
@@ -110,10 +103,6 @@ export const MOCK_POLICIES: Policy[] = [
     payoutAmount: "NT$ 1,000,000",
     payoutRatio: "100%",
     payoutStandard: "guaranteed",
-    flagged: {
-      source: "Dcard 保險版 2024/06 討論串",
-      note: "多名用戶反映理賠審核期較長，部分標靶藥物需附加證明。",
-    },
   },
   {
     id: "p3",
@@ -161,10 +150,6 @@ export const MOCK_POLICIES: Policy[] = [
     payoutAmount: "NT$ 800,000",
     payoutRatio: "100%",
     payoutStandard: "guaranteed",
-    flagged: {
-      source: "PTT insurance 版 2023 熱門文",
-      note: "早期版本條款對「心血管重大傷病」定義較嚴格，需諮詢最新版本。",
-    },
   },
   {
     id: "p6",
@@ -241,10 +226,6 @@ export const MOCK_POLICIES: Policy[] = [
     payoutAmount: "NT$ 2,000 / 日",
     payoutRatio: "75%",
     payoutStandard: "consult",
-    flagged: {
-      source: "Mobile01 保險討論區",
-      note: "部分用戶反映客服回應速度較慢，理賠文件要求較繁瑣。",
-    },
   },
 ];
 
@@ -695,7 +676,7 @@ export const buildPlans = (a: Answers): Plan[] =>
 
 /* ---------------- Detailed comparison matrix schema ---------------- */
 
-export type CellKind = "text" | "badges" | "list" | "payoutBadge" | "premium" | "links";
+export type CellKind = "text" | "badges" | "list" | "payoutBadge" | "premium";
 
 export interface CompareRow {
   id: string;
@@ -734,7 +715,6 @@ export const COMPARE_GROUPS: CompareGroup[] = [
       t("code", "商品代碼", (p) => p.code),
       t("category", "險種", (p) => `${p.category} · ${p.medicalType}`),
       t("status", "商品狀態", (p) => p.status),
-      t("approval", "核准 / 核備 / 備查文號", (p) => p.approvalNumber),
     ],
   },
   {
@@ -799,17 +779,6 @@ export const COMPARE_GROUPS: CompareGroup[] = [
       l("cons", "缺點", (p) => p.cons),
       t("suitableFor", "適合對象", (p) => p.suitableFor),
       t("notSuitableFor", "可能不適合對象", (p) => p.notSuitableFor),
-    ],
-  },
-  {
-    id: "docs",
-    label: "文件與來源",
-    rows: [
-      { id: "terms", label: "保單條款", kind: "links", get: (p) => p.policyDocumentUrl },
-      { id: "brochure", label: "商品文件", kind: "links", get: (p) => p.productDocumentUrl },
-      { id: "official", label: "官方商品頁", kind: "links", get: (p) => p.officialProductUrl },
-      t("dataSource", "資料來源", (p) => p.dataSource),
-      t("lastUpdated", "最後更新時間", (p) => p.lastUpdated),
     ],
   },
 ];

@@ -8,7 +8,7 @@ import { Questionnaire } from "@/components/insurance/Questionnaire";
 import { PlanResults } from "@/components/insurance/PlanResults";
 import { ComparisonMatrix } from "@/components/insurance/ComparisonMatrix";
 import { AiAssistant } from "@/components/insurance/AiAssistant";
-import { DEFAULT_ANSWERS, MOCK_POLICIES, buildPlans, type Answers, type Plan, type Policy } from "@/data/insurance";
+import { DEFAULT_ANSWERS, MAX_COMPARE, MOCK_POLICIES, buildPlans, type Answers, type Plan, type Policy } from "@/data/insurance";
 import { generateRecommendations } from "@/lib/recommendation-llm";
 import { useInsuranceStore } from "@/store/useInsuranceStore";
 
@@ -50,7 +50,7 @@ function Index() {
       setTimeout(() => document.getElementById("plans")?.scrollIntoView({ behavior: "smooth" }), 100);
     } catch (error) {
       toast.error("推薦方案產出失敗", {
-        description: error instanceof Error ? error.message : "請確認後端 LLM 服務是否正在執行",
+        description: `${error instanceof Error ? error.message : "請確認後端 LLM 服務是否正在執行"}。系統已自動重試；請修正條件後重新送出。`,
       });
     } finally {
       setLoading(false);
@@ -104,7 +104,7 @@ function Index() {
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
                   <h2 className="font-semibold">商品比較</h2>
-                  <p className="text-sm text-muted-foreground">已選 {selectedPolicies.length} 款商品 · 最多可比較 8 款</p>
+                  <p className="text-sm text-muted-foreground">已選 {selectedPolicies.length} 款商品 · 最多可比較 {MAX_COMPARE} 款</p>
                 </div>
                 <Button variant="outline" size="sm" onClick={() => document.getElementById("plans")?.scrollIntoView({ behavior: "smooth" })}>
                   返回推薦結果
@@ -120,7 +120,7 @@ function Index() {
                       size="sm"
                       variant={selected ? "default" : "outline"}
                       onClick={() => togglePolicySelection(policy.id, !selected)}
-                      disabled={!selected && selectedPolicyIds.length >= 8}
+                      disabled={!selected && selectedPolicyIds.length >= MAX_COMPARE}
                     >
                       {selected ? "移除" : "加入"} {policy.company} · {policy.policyName}
                     </Button>

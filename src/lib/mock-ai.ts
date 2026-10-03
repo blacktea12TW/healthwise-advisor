@@ -243,7 +243,7 @@ function validateSuggestedQuestions(raw: unknown, ctx: AssistantContext): Sugges
       return {
         id: uid(),
         text: item.text.trim(),
-        why: item.why.trim(),
+        why: item.why.trim().replaceAll("使用者", "您"),
         ...(anchor ? { anchor, anchorLabel: typeof item.anchorLabel === "string" ? item.anchorLabel : "查看相關差異" } : {}),
       };
     });
@@ -276,7 +276,7 @@ export async function generateSuggestedQuestionsWithLLM(ctx: AssistantContext): 
 3. 問題不要照抄固定模板。
 4. 優先針對比較表中的實際商品差異，以及這些差異對使用者的影響。
 5. 不得捏造資料或做出沒有根據的理賠結論。
-6. 每題都要有 why，說明為何對這位使用者重要。
+6. 每題都要有 why，說明為何對您重要；why 中提到使用者時，一律使用「您」。
 7. anchor 只能從「合法比較差異」中選一個；若問題不需要對應表格，可省略 anchor。
 8. 問題與 why 必須使用自然的繁體中文，不得提到任何內部資料格式或技術識別資訊，例如 p1、p2、p3、policy id、rowId、groupId、anchor、JSON 或欄位 ID。
 9. 只回傳 JSON，不要 Markdown 或其他文字。

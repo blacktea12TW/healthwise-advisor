@@ -33,7 +33,7 @@ export interface Policy {
   paymentPeriod?: string;
   coveragePeriod?: string;
   mainOrRider?: string;
-  requiresMainPolicy?: string;
+  requiresMainPolicy?: string | boolean;
   covers?: string[];
   payoutItems?: string[];
   exclusions?: string[];
@@ -50,7 +50,7 @@ export interface Policy {
   healthRestrictions?: string;
   payoutLimit?: string;
   payoutMethod?: string;
-  isReimbursement?: string;
+  isReimbursement?: string | boolean;
   receiptType?: string;
   surgeryBenefit?: string;
   hospitalBenefit?: string;
@@ -277,8 +277,8 @@ export interface Answers {
 }
 
 export const DEFAULT_ANSWERS: Answers = {
-  age: 21,
-  ageConfirmed: false,
+  age: 30,
+  ageConfirmed: true,
   gender: null,
   identity: null,
   income: null,
@@ -287,7 +287,7 @@ export const DEFAULT_ANSWERS: Answers = {
   dependents: null,
   existing: [],
   budget: 3500,
-  budgetConfirmed: false,
+  budgetConfirmed: true,
   preference: null,
   infoStyle: null,
 };
@@ -698,6 +698,9 @@ const t = (id: string, label: string, get: (p: Policy) => string | undefined): C
   kind: "text",
   get,
 });
+
+export const yesNoLabel = (value: string | boolean | undefined) =>
+  typeof value === "boolean" ? (value ? "是" : "否") : value;
 const l = (id: string, label: string, get: (p: Policy) => string[] | undefined): CompareRow => ({
   id,
   label,
@@ -726,7 +729,7 @@ export const COMPARE_GROUPS: CompareGroup[] = [
       t("paymentPeriod", "繳費年期", (p) => p.paymentPeriod),
       t("coveragePeriod", "保障期間", (p) => p.coveragePeriod),
       t("mainOrRider", "主約 / 附約", (p) => p.mainOrRider),
-      t("requiresMain", "是否需要搭配主約", (p) => p.requiresMainPolicy),
+      t("requiresMain", "是否需要搭配主約", (p) => yesNoLabel(p.requiresMainPolicy)),
     ],
   },
   {
@@ -763,7 +766,7 @@ export const COMPARE_GROUPS: CompareGroup[] = [
       t("payoutAmount", "理賠金額 / 給付上限", (p) => `${p.payoutAmount}｜${p.payoutLimit ?? "—"}`),
       t("payoutRatio", "賠償比例", (p) => p.payoutRatio),
       t("payoutMethod", "給付方式", (p) => p.payoutMethod),
-      t("isReimbursement", "是否實支實付", (p) => p.isReimbursement),
+      t("isReimbursement", "是否實支實付", (p) => yesNoLabel(p.isReimbursement)),
       t("receiptType", "正本 / 副本理賠", (p) => p.receiptType),
       t("surgery", "手術給付", (p) => p.surgeryBenefit),
       t("hospital", "住院給付", (p) => p.hospitalBenefit),

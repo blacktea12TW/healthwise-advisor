@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import {
   ChevronDown,
-  Copy,
   Download,
   Highlighter,
   ListChecks,
   X,
 } from "lucide-react";
 import { toast } from "sonner";
+import * as XLSX from "xlsx";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,7 @@ import {
   type Policy,
   COMPARE_GROUPS,
   PAYOUT_META,
+  yesNoLabel,
   rowIsIdentical,
 } from "@/data/insurance";
 import { cn } from "@/lib/utils";
@@ -137,42 +138,36 @@ export function ComparisonMatrix({
     );
   }
 
-  const copyLink = async () => {
-    const url = `${window.location.origin}${window.location.pathname}?compare=${policies
-      .map((p) => p.id)
-      .join(",")}`;
-    try {
-      await navigator.clipboard.writeText(url);
-      toast.success("已複製比較連結", { description: url });
-    } catch {
-      toast.error("複製失敗，請手動複製", { description: url });
-    }
-  };
-
-  const download = () => {
-    const esc = (s: string) => `"${s.replace(/"/g, '""')}"`;
-    const lines: string[] = [];
-    lines.push(
-      ["比較維度", ...policies.map((p) => `${p.company} ${p.policyName}`)].map(esc).join(","),
-    );
+  const exportRows = () => {
+    const rows: string[][] = [];
+    rows.push(["比較維度", ...policies.map((p) => `${p.company} ${p.policyName}`)]);
     for (const g of COMPARE_GROUPS) {
-      lines.push([`【${g.label}】`, ...policies.map(() => "")].map(esc).join(","));
+      rows.push([`【${g.label}】`, ...policies.map(() => "")]);
       for (const r of g.rows) {
         if (onlyDiff && rowIsIdentical(r, policies)) continue;
         const vals = policies.map((p) => {
           const v = r.get(p);
-          return Array.isArray(v) ? v.join("；") : (v ?? "—");
+          return Array.isArray(v)
+            ? v.join("；")
+            : r.kind === "payoutBadge"
+              ? PAYOUT_META[v as Policy["payoutStandard"]]?.label ?? v ?? "—"
+            : (r.id === "isReimbursement" || r.id === "requiresMain"
+                ? yesNoLabel(v as string | boolean | undefined)
+                : v) ?? "—";
         });
-        lines.push([r.label, ...vals].map(esc).join(","));
+        rows.push([r.label, ...vals]);
       }
     }
-    const blob = new Blob(["\uFEFF" + lines.join("\n")], { type: "text/csv;charset=utf-8" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = `insurance-comparison-${policies.length}.csv`;
-    a.click();
-    URL.revokeObjectURL(a.href);
-    toast.success("已下載比較表 (CSV)");
+    return rows;
+  };
+
+  const downloadExcel = () => {
+    const worksheet = XLSX.utils.aoa_to_sheet(exportRows());
+    worksheet["!cols"] = [{ wch: 28 }, ...policies.map(() => ({ wch: 42 }))];
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "保單比較表");
+    XLSX.writeFile(workbook, "InsurMatch-保險比較表.xlsx");
+    toast.success("已下載比較表 (Excel)");
   };
 
   const colWidth = "min-w-[240px]";
@@ -201,13 +196,9 @@ export function ComparisonMatrix({
               差異高亮
             </Label>
           </div>
-          <Button variant="outline" size="sm" onClick={copyLink}>
-            <Copy className="h-4 w-4" />
-            複製比較連結
-          </Button>
-          <Button variant="outline" size="sm" onClick={download}>
+          <Button variant="outline" size="sm" onClick={downloadExcel}>
             <Download className="h-4 w-4" />
-            下載比較表
+            下載比較表 (Excel)
           </Button>
         </div>
       </div>

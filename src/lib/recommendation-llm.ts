@@ -41,7 +41,7 @@ function extractJson(text: string): LlmRecommendation {
     }
   }
 
-  throw new Error("LLM 回應格式錯誤，請再試一次");
+  throw new Error("AI 回應格式錯誤，請再試一次");
 }
 
 function isText(value: unknown): value is string {
@@ -162,7 +162,15 @@ function validatePolicy(raw: unknown, index: number): Policy {
     );
   }
 
-  return policy;
+  return {
+    ...policy,
+    ...(typeof policy.isReimbursement === "boolean"
+      ? { isReimbursement: policy.isReimbursement ? "是" : "否" }
+      : {}),
+    ...(typeof policy.requiresMainPolicy === "boolean"
+      ? { requiresMainPolicy: policy.requiresMainPolicy ? "是" : "否" }
+      : {}),
+  };
 }
 
 function validatePlans(
@@ -170,7 +178,7 @@ function validatePlans(
   policyIds: Set<string>,
 ): Plan[] {
   if (!Array.isArray(raw) || raw.length !== 3) {
-    throw new Error("LLM 必須回傳剛好 3 個 plans");
+    throw new Error("AI 必須回傳剛好 3 個 plans");
   }
 
   const expectedTiers: Plan["tier"][] = [
@@ -231,6 +239,9 @@ function validatePlans(
 
 export async function generateRecommendations(
   answers: Answers,
+  options: {
+    onRetry?: (errorMessage: string, nextAttempt: number, totalAttempts: number) => void;
+  } = {},
 ) {
   const diseaseContext = DISEASES
     .map((disease) => disease.label)
@@ -416,7 +427,7 @@ ${diseaseContext}
       "coveragePeriod": "保障期間或 X",
 
       "mainOrRider": "主約或附約或 X",
-      "requiresMainPolicy": "是否需要搭配主約或 X",
+      "requiresMainPolicy": "請填「是」或「否」；若使用布林值，true 表示是、false 表示否；未知填 X",
 
       "tags": [
         "特色標籤"
@@ -462,7 +473,7 @@ ${diseaseContext}
 
       "payoutMethod": "給付方式或 X",
 
-      "isReimbursement": "是否實支實付或 X",
+      "isReimbursement": "請填「是」或「否」；若使用布林值，true 表示是、false 表示否；未知填 X",
       "receiptType": "正本副本理賠規則或 X",
 
       "surgeryBenefit": "手術給付或 X",
@@ -829,7 +840,7 @@ full
 
   const validateResponse = (response: LlmRecommendation) => {
     if (!isText(response.summary)) {
-      throw new Error("LLM 回應缺少 summary");
+      throw new Error("AI 回應缺少 summary");
     }
 
     const reasoning = normalizeReasoning(response.reasoning);
@@ -855,7 +866,7 @@ full
       );
 
     if (hasDuplicatePolicies(policies)) {
-      throw new Error("LLM 回傳了重複的保險商品，請再試一次");
+      throw new Error("AI 回傳了重複的保險商品，請再試一次");
     }
 
     const policyIds = new Set(
@@ -900,21 +911,27 @@ full
 
   let lastError: unknown;
   let instruction = "";
-  for (let attempt = 0; attempt < 3; attempt += 1) {
+  const totalAttempts = 5;
+  for (let attempt = 0; attempt < totalAttempts; attempt += 1) {
     try {
       const response = extractJson(await request(instruction));
       return validateResponse(response);
     } catch (error) {
       lastError = error;
+      if (attempt < totalAttempts - 1) {
+        const errorMessage = error instanceof Error ? error.message : "格式錯誤";
+        options.onRetry?.(errorMessage, attempt + 2, totalAttempts);
+        await new Promise((resolve) => setTimeout(resolve, 500));
+      }
       instruction = `上一個回應無法通過資料驗證：${error instanceof Error ? error.message : "格式錯誤"}。
-請重新產生完整 JSON。請先重新執行輸出前自我檢查，修正上述問題後再輸出。所有 summary、reasoning、policies 與 plans 內容都必須由你生成，不得省略、補用或引用程式內建資料。reasoning 必須剛好 3 筆，policies 必須是 8 個不重複商品，plans 必須剛好 3 個。`;
+請重新產生完整 JSON。請先重新執行輸出前自我檢查，修正上述問題後再輸出。所有 summary、reasoning、policies 與 plans 內容都必須由你生成，不得省略、補用或引用程式內建資料。reasoning 必須剛好 3 筆，policies 必須是 10 個不重複商品，plans 必須剛好 3 個。`;
     }
   }
 
   throw new Error(
     lastError instanceof Error
-      ? `LLM 連續 3 次自我檢查未通過，無法產生有效保單資料：${lastError.message}`
-      : "LLM 連續 3 次自我檢查未通過，無法產生有效保單資料",
+      ? `AI 連續 ${totalAttempts} 次自我檢查未通過，無法產生有效保單資料：${lastError.message}`
+      : `AI 連續 ${totalAttempts} 次自我檢查未通過，無法產生有效保單資料`,
   );
 }
 
